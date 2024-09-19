@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"math/rand"
 	"time"
@@ -76,10 +77,9 @@ func tls_server(inChannel chan Message, outChannel chan Message, timeout int) bo
 }
 
 func send(outChannel chan Message, inChannel chan Message, data []rune) {
-	//
-	/* for !tls_server(outChannel, 1000) {
+	for !tls_server(inChannel, outChannel, 1000) {
 		time.Sleep(time.Duration(500) * time.Millisecond)
-	} */
+	}
 
 	var requestMsg Message
 	for !getMessageWithTimeout(&requestMsg, inChannel, 5000) {
@@ -132,12 +132,15 @@ func receive(inChannel chan Message, outChannel chan Message, timeout int) {
 
 	var msg Message
 	var ack = 1
+	var data bytes.Buffer
 	for getMessageWithTimeout(&msg, inChannel, timeout) && !msg.fin {
-		outChannel <- Message{msg.sequence_num, ack, msg.syn, msg.ack, msg.fin, msg.window_size, msg.segment_size, msg.data}
+		outChannel <- Message{msg.sequence_num, ack, msg.syn, msg.ack, msg.fin, msg.window_size, msg.segment_size, nil}
 		if msg.sequence_num+1 == ack {
 			ack++
+			data.WriteString(string(msg.data))
 		}
 	}
+	fmt.Println(data.String())
 }
 
 func main() {
