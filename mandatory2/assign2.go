@@ -14,7 +14,7 @@ type Message struct {
 	fin            bool
 	window_size    int
 	segment_size   int
-	data           *rune
+	data           []rune
 }
 
 func (msg *Message) print() string {
@@ -75,11 +75,50 @@ func tls_server(channel chan Message, timeout int) bool {
 	return true
 }
 
-func send(channel chan Message, data []rune) {
+func send(outChannel chan Message, inChannel chan Message, data []rune) {
 	//
-	for !tls_server(channel, 1000) {
+	for !tls_server(outChannel, 1000) {
 		time.Sleep(time.Duration(500) * time.Millisecond)
 	}
+
+	var requestMsg Message
+	for !getMessageWithTimeout(&requestMsg, inChannel, 5000) {
+	}
+
+	windowSize := requestMsg.window_size
+	segmentSize := requestMsg.segment_size
+
+	indice := 0
+	counter := 0
+	segmentRecieved := make([]bool, len(data)/segmentSize+2) // +2 to avoid off by one error from acknowledgements being incremented automatically
+
+	go func(segArr []bool, msgCh chan Message) {
+		for {
+			var ackMsg Message
+			if getMessageWithTimeout(&ackMsg, msgCh, 1000) {
+				segArr[ackMsg.acknowledgment] = true
+			}
+		}
+	}(segmentRecieved, inChannel)
+
+	for !segmentRecieved[len(data)/segmentSize+1] {
+		if !segmentRecieved[min(0, counter-windowSize)] { // if we have fired off the whole window-size without acknowledgement
+			counter = min(0, counter-windowSize) // reset to start of block
+			indice = segmentSize * counter
+		}
+
+		block := data[indice : indice+segmentSize]
+		indice += segmentSize
+		msgBlock := Message{counter, 0, true, false, false, windowSize, segmentSize, block}
+
+		outChannel <- msgBlock
+		counter++
+	}
+
+	finMsg := Message{counter, 0, false, false, true, 0, 0, nil}
+	outChannel <- finMsg
+
+	fmt.Println("Server finished sending off")
 }
 
 func recieve(channel chan Message) {
