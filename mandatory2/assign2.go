@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"math/rand"
 	"time"
@@ -139,21 +140,22 @@ func receive(inChannel chan Message, outChannel chan Message, timeout int) {
 
 	var msg Message
 	var ack = 1
+	var data bytes.Buffer
 	for getMessageWithTimeout(&msg, inChannel, timeout) && !msg.fin {
-		outChannel <- Message{msg.sequence_num, ack, msg.syn, msg.ack, msg.fin, msg.window_size, msg.segment_size, msg.data}
-		fmt.Printf("Client got msg %d\n", msg.sequence_num)
+		outChannel <- Message{msg.sequence_num, ack, msg.syn, msg.ack, msg.fin, msg.window_size, msg.segment_size, nil}
 		if msg.sequence_num+1 == ack {
 			ack++
+			data.WriteString(string(msg.data))
 		}
 	}
+	fmt.Println(data.String())
 }
 
 func main() {
-
 	inChannel := make(chan Message)
 	outChannel := make(chan Message)
-	go send(outChannel, inChannel, []rune("this is a test message\neerere rererere\nhrhtrhtrhtrhtrhthr\ntjrthjeltjrekthrejthjlerkthjerltre\nqwe qew qwe qwe qwe "))
-	go receive(inChannel, outChannel, 1000)
+	go send(inChannel, outChannel, []rune("weqewqewqewq\nqweqweqweqw\nrejthetjerthreikthrwjithwjoithewjorhewoir\nrhjithwrtgweoigtewoitgegtewiogtewyiotgewitoew"))
+	go receive(outChannel, inChannel, 1000)
 
 	time.Sleep(2000 * time.Millisecond)
 }
