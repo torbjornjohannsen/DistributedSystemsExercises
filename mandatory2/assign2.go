@@ -18,7 +18,8 @@ type Message struct {
 }
 
 func (msg *Message) print() string {
-	return fmt.Sprintf("Seq: %d\nAck: %d\nFlags:\tSyn\tAck\tFin\n \t%t\t%t\t%t\nWindow_Size %d\nSegment_size %d\n", msg.sequence_num, msg.acknowledgment, msg.syn, msg.ack, msg.fin, msg.window_size, msg.segment_size)
+	return fmt.Sprintf("Seq: %d\nAck: %d\nFlags:\tSyn\tAck\tFin\n \t%t\t%t\t%t\nWindow_Size %d\nSegment_size %d\n",
+		msg.sequence_num, msg.acknowledgment, msg.syn, msg.ack, msg.fin, msg.window_size, msg.segment_size)
 }
 
 func client(channel chan Message) {
@@ -49,7 +50,7 @@ func server(channel chan Message) {
 		fmt.Println("Wrong message")
 		return
 	}
-	fmt.Printf("Server recieved: %s\n", msg.print())
+	fmt.Printf("Server Recieved: %s\n", msg3.print())
 
 }
 
