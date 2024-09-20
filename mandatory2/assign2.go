@@ -103,9 +103,9 @@ func send(inChannel chan Message, outChannel chan Message, data []rune) {
 	go func(segArr []bool, msgCh chan Message) {
 		for {
 			var ackMsg Message
-			if getMessageWithTimeout(&ackMsg, msgCh, 5000) {
-				segArr[ackMsg.acknowledgment-1] = true
-			}
+
+			ackMsg = <-msgCh
+			segArr[ackMsg.acknowledgment-1] = true
 		}
 	}(segmentRecieved, inChannel)
 
@@ -115,7 +115,7 @@ func send(inChannel chan Message, outChannel chan Message, data []rune) {
 			indice = segmentSize * counter
 		}
 
-		block := data[indice:min(indice+segmentSize, len(data))]
+		block := data[indice : min(indice+segmentSize, len(data))]
 		indice = min(indice+segmentSize, len(data))
 		msgBlock := Message{counter, 0, true, false, false, windowSize, segmentSize, block}
 		fmt.Printf("Server sent msg %d\n", counter)
@@ -139,16 +139,18 @@ func receive(inChannel chan Message, outChannel chan Message, timeout int) {
 	outChannel <- requestMsg
 
 	var msg Message
-	var ack = 1
+	var ack = 0
 	var data bytes.Buffer
 	for getMessageWithTimeout(&msg, inChannel, timeout) && !msg.fin {
-		outChannel <- Message{msg.sequence_num, ack, msg.syn, msg.ack, msg.fin, msg.window_size, msg.segment_size, nil}
-		if msg.sequence_num+1 == ack {
+
+		if msg.sequence_num == ack {
 			ack++
 			data.WriteString(string(msg.data))
+			fmt.Printf("Client received %d {%s}\n", msg.sequence_num, string(msg.data))
 		}
+		outChannel <- Message{msg.sequence_num, ack, msg.syn, msg.ack, msg.fin, msg.window_size, msg.segment_size, nil}
 	}
-	fmt.Println(data.String())
+	fmt.Println("Entire message:\n" + data.String())
 }
 
 func main() {
