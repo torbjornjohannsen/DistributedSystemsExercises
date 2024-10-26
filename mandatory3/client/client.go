@@ -56,7 +56,7 @@ func runChat(client pb.ChittChatClient) {
 			lamportTime = max(lamportTime, in.LamportTime) + 1
 			mu.Unlock()
 
-			log.Println(in.Text, " @", lamportTime)
+			log.Println("Recieved:\"", in.Text, "\" @", lamportTime)
 		}
 	}()
 
@@ -76,6 +76,7 @@ func runChat(client pb.ChittChatClient) {
 		if err != nil {
 			log.Fatalln("Client failed in send due to ", err)
 		}
+		log.Println("Published \"", msg.Text, "\"")
 		time.Sleep(time.Duration(rand.IntN(2000)) * time.Millisecond)
 	}
 

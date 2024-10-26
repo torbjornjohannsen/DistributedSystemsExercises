@@ -74,22 +74,29 @@ func (s *ChatServer) Chat(stream grpc.BidiStreamingServer[pb.Message, pb.Message
 			return err
 		}
 
+		var msgText string
+
 		if in.LastMessage { // graceful exit
+			msgText = fmt.Sprint("Participant ", in.SenderId, " left Chitty-Chat at Lamport time ", s.lamportTime)
 
 			s.msgToBroadcast <- &pb.Message{
-				Text:        fmt.Sprint("Participant ", in.SenderId, " left Chitty-Chat at Lamport time ", s.lamportTime),
+				Text:        msgText,
 				LamportTime: s.getLamportTime(in.LamportTime),
 				SenderId:    in.SenderId,
 				LastMessage: in.LastMessage}
+
+			log.Println("Ended chat with participant ", in.SenderId)
 
 			return nil
 		} else {
+			msgText = fmt.Sprint(in.SenderId, ": ", in.Text)
 
 			s.msgToBroadcast <- &pb.Message{
-				Text:        fmt.Sprint(in.SenderId, ": ", in.Text),
+				Text:        msgText,
 				LamportTime: s.getLamportTime(in.LamportTime),
 				SenderId:    in.SenderId,
 				LastMessage: in.LastMessage}
+
 		}
 	}
 }
@@ -102,6 +109,7 @@ func (s *ChatServer) Broadcaster() {
 		for _, channel := range s.channels {
 			channel <- msg
 		}
+		log.Println("Broadcasted \"", msg.Text, "\"")
 	}
 }
 
