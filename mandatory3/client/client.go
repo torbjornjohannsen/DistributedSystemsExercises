@@ -22,7 +22,7 @@ var (
 )
 
 func runChat(client pb.ChittChatClient) {
-	id := rand.Int()
+	var id int32
 	lamportTime := int32(0)
 	var mu sync.Mutex
 
@@ -33,6 +33,12 @@ func runChat(client pb.ChittChatClient) {
 		log.Fatalln("Client failed due to", err)
 	}
 
+	in, err := stream.Recv() // the initial message whcih assigns ID
+	if err != nil {
+		log.Fatalln("Client failed due to", err)
+	}
+	id = in.SenderId
+
 	// goroutine to recieve and log messages
 	go func() {
 		for {
@@ -42,10 +48,10 @@ func runChat(client pb.ChittChatClient) {
 			}
 
 			mu.Lock()
-			lamportTime = max(lamportTime+1, in.LamportTime)
+			lamportTime = max(lamportTime, in.LamportTime) + 1
 			mu.Unlock()
 
-			log.Println("Client recieved: ", in.Text, " @ ", in.LamportTime)
+			log.Println(in.Text, " @", lamportTime)
 		}
 	}()
 
