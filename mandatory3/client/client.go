@@ -4,6 +4,7 @@ import (
 	"context"
 	pb "dissys/mandatory3/Chitt_chat"
 	"flag"
+	"io"
 	"log"
 	"math/rand/v2"
 	"sync"
@@ -43,8 +44,12 @@ func runChat(client pb.ChittChatClient) {
 	go func() {
 		for {
 			in, err := stream.Recv()
+			if err == io.EOF {
+				log.Println("Comms over")
+				return
+			}
 			if err != nil {
-				log.Fatalln("Client failed due to ", err)
+				log.Fatalln("Client failed in recieve due to ", err)
 			}
 
 			mu.Lock()
@@ -69,7 +74,7 @@ func runChat(client pb.ChittChatClient) {
 
 		err := stream.Send(&msg)
 		if err != nil {
-			log.Fatalln("Client failed due to ", err)
+			log.Fatalln("Client failed in send due to ", err)
 		}
 		time.Sleep(time.Duration(rand.IntN(2000)) * time.Millisecond)
 	}
@@ -81,6 +86,8 @@ func runChat(client pb.ChittChatClient) {
 		LastMessage: true,
 	}
 	stream.Send(&quitMsg)
+
+	time.Sleep(time.Duration(500) * time.Millisecond)
 
 	stream.CloseSend()
 }

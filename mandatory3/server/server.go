@@ -82,7 +82,6 @@ func (s *ChatServer) Chat(stream grpc.BidiStreamingServer[pb.Message, pb.Message
 				SenderId:    in.SenderId,
 				LastMessage: in.LastMessage}
 
-			stream.Close()
 			return nil
 		} else {
 
