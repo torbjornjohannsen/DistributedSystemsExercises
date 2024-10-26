@@ -12,7 +12,7 @@ service Chitt_chat{
 
 message Message {
   string text = 1;
-  int32 lamper_time = 2;
+  int32 lamport_time = 2;
   int32 sender_id = 3;
   bool last_message = 4;
 }
