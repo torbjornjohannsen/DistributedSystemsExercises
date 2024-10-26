@@ -59,7 +59,7 @@ func runChat(client pb.ChittChatClient) {
 			Text:        "Client ",
 			LamportTime: lamportTime,
 			SenderId:    int32(id),
-			LastMessage: i-1 == numMessages}
+			LastMessage: false}
 
 		err := stream.Send(&msg)
 		if err != nil {
@@ -67,6 +67,15 @@ func runChat(client pb.ChittChatClient) {
 		}
 		time.Sleep(time.Duration(rand.IntN(2000)) * time.Millisecond)
 	}
+
+	quitMsg := pb.Message{
+		Text:        "",
+		LamportTime: lamportTime,
+		SenderId:    int32(id),
+		LastMessage: true,
+	}
+	stream.Send(&quitMsg)
+
 	stream.CloseSend()
 }
 

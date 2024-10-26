@@ -24,6 +24,7 @@ type ChatServer struct {
 	pb.UnimplementedChittChatServer
 
 	mu             sync.Mutex
+	clientCounter  int
 	lamportTime    int32
 	msgToBroadcast chan *pb.Message
 	channels       []chan *pb.Message
@@ -32,13 +33,19 @@ type ChatServer struct {
 func (s *ChatServer) Chat(stream grpc.BidiStreamingServer[pb.Message, pb.Message]) error {
 	broadcastChan := make(chan *pb.Message)
 	s.mu.Lock()
-
+	s.clientCounter++
 	log.Println("New connection established")
 	s.channels = append(s.channels, broadcastChan)
 
 	if len(s.channels) <= 1 { // first time we get a connection launch the broadcaster thread
 		go s.Broadcaster()
 	}
+
+	s.msgToBroadcast <- &pb.Message{
+		Text:        fmt.Sprint("Participant ", s.clientCounter, " joined Chitty-Chat at Lamport time ", s.lamportTime),
+		LamportTime: s.lamportTime,
+		SenderId:    -1, // for server
+		LastMessage: false}
 
 	s.mu.Unlock()
 
@@ -61,14 +68,22 @@ func (s *ChatServer) Chat(stream grpc.BidiStreamingServer[pb.Message, pb.Message
 		s.lamportTime = max(s.lamportTime+1, in.LamportTime)
 		s.mu.Unlock()
 
-		s.msgToBroadcast <- &pb.Message{
-			Text:        in.Text,
-			LamportTime: s.lamportTime,
-			SenderId:    in.SenderId,
-			LastMessage: in.LastMessage}
-
 		if in.LastMessage { // graceful exit
+
+			s.msgToBroadcast <- &pb.Message{
+				Text:        fmt.Sprint("Participant ", in.SenderId, " left Chitty-Chat at Lamport time ", s.lamportTime),
+				LamportTime: s.lamportTime,
+				SenderId:    in.SenderId,
+				LastMessage: in.LastMessage}
+
 			return nil
+		} else {
+
+			s.msgToBroadcast <- &pb.Message{
+				Text:        in.Text,
+				LamportTime: s.lamportTime,
+				SenderId:    in.SenderId,
+				LastMessage: in.LastMessage}
 		}
 	}
 }
@@ -88,7 +103,8 @@ func newServer(broadcastChan chan *pb.Message) *ChatServer {
 	return &ChatServer{
 		lamportTime:    0,
 		msgToBroadcast: broadcastChan,
-		channels:       make([]chan *pb.Message, 0)}
+		channels:       make([]chan *pb.Message, 0),
+		clientCounter:  0}
 }
 
 func main() {
