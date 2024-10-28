@@ -30,16 +30,16 @@ Note: The client might or might not get the message announcing it's departure, d
 
 If you want to create logfiles, simply add 
 
-    > logname.txt 2>&1 
+    2> logname.txt  
 
 after the command to run.
 
 I.e. for the server 
 
-    go run server/server.go > serverlog.txt 2>&1 
+    go run server/server.go > serverlog.txt
 
 The 
 
-    2>&1
+    2> logname.txt
 
-part pipes stderr(the output the log package writes to by default) to stdout, which is then piped to the .txt file 
+part pipes stderr(the output the log package writes to by default) to the .txt file 
