@@ -121,7 +121,7 @@ func (s *ChatServer) Broadcaster() {
 
 func newServer(broadcastChan chan *pb.Message) *ChatServer {
 	return &ChatServer{
-		lamportTime:    1,
+		lamportTime:    1, // 1 because the setup stuff counts as an event
 		msgToBroadcast: broadcastChan,
 		channels:       make([]chan *pb.Message, 0),
 		clientCounter:  0}
