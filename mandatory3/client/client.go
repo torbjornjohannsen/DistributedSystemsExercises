@@ -76,7 +76,7 @@ func runChat(client pb.ChittChatClient) {
 		if err != nil {
 			log.Fatalln("Client failed in send due to ", err)
 		}
-		log.Println("Published \"", msg.Text, "\"")
+		log.Println("Published \"", msg.Text, "\" @", lamportTime)
 		time.Sleep(time.Duration(rand.IntN(2000)) * time.Millisecond)
 	}
 
