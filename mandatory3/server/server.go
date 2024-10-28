@@ -63,8 +63,13 @@ func (s *ChatServer) Chat(stream grpc.BidiStreamingServer[pb.Message, pb.Message
 	go func() {
 		for {
 			msg := <-broadcastChan
+			//msg.LamportTime = s.getLamportTime(0)
 
-			stream.Send(msg)
+			s.mu.Lock()
+			s.lamportTime++
+			stream.Send(&pb.Message{Text: msg.Text, LamportTime: s.lamportTime})
+			log.Println("\t@", s.lamportTime)
+			s.mu.Unlock()
 		}
 	}()
 
@@ -77,11 +82,12 @@ func (s *ChatServer) Chat(stream grpc.BidiStreamingServer[pb.Message, pb.Message
 		var msgText string
 
 		if in.LastMessage { // graceful exit
-			msgText = fmt.Sprint("Participant ", in.SenderId, " left Chitty-Chat at Lamport time ", s.lamportTime)
+			lT := s.getLamportTime(in.LamportTime)
+			msgText = fmt.Sprint("Participant ", in.SenderId, " left Chitty-Chat at Lamport time ", lT)
 
 			s.msgToBroadcast <- &pb.Message{
 				Text:        msgText,
-				LamportTime: s.getLamportTime(in.LamportTime),
+				LamportTime: lT,
 				SenderId:    in.SenderId,
 				LastMessage: in.LastMessage}
 

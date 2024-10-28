@@ -24,7 +24,7 @@ var (
 
 func runChat(client pb.ChittChatClient) {
 	var id int32
-	lamportTime := int32(0)
+	lamportTime := int32(1)
 	var mu sync.Mutex
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
