@@ -36,7 +36,7 @@ after the command to run.
 
 I.e. for the server 
 
-    go run server/server.go > serverlog.txt
+    go run server/server.go 2> serverlog.txt
 
 The 
 
