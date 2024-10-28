@@ -36,10 +36,10 @@ after the command to run.
 
 I.e. for the server 
 
-    go run server/server > serverlog.txt 2>&1 
+    go run server/server.go > serverlog.txt 2>&1 
 
 The 
 
     2>&1
 
-part pipes stderr(the output the log package writes to by default) to stdout, which is piped to the .txt file 
+part pipes stderr(the output the log package writes to by default) to stdout, which is then piped to the .txt file 
