@@ -129,8 +129,8 @@ func main() {
 		node.hasToken = true
 		node.mu.Unlock()
 
-		time.Sleep(time.Duration(15 * time.Second))
-		log.Println("Sent \"", node.token.Value, "\" to ", node.nextPort)
+		time.Sleep(time.Duration(5 * time.Second))
+		log.Println("Inital send \"", node.token.Value, "\" to ", node.nextPort)
 		Dial(node, node.nextPort)
 
 	}
