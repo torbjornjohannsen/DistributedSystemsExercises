@@ -120,22 +120,24 @@ func newNode(id int32, thisPort int32, nextPort int32) *DMENode {
 }
 
 func serverKiller(server *grpc.Server, node *DMENode) {
-	time.Sleep(30 * time.Second)
+	time.Sleep(100 * time.Second)
 	server.GracefulStop()
+	log.Println("Killing node ", node.id)
 	os.Exit(0)
 }
 
 func main() {
 	// get port number, throws errors if anything is wrong
 	id, err := strconv.Atoi(os.Args[1])
-	if err != nil {
-		log.Fatalln("Failed to convert port:", err)
+	numNodes, err2 := strconv.Atoi(os.Args[2])
+	if err != nil || err2 != nil {
+		log.Fatalln("Failed to convert id or numNodes:", err)
 	}
 	flag.Parse()
 
 	thisPort := int32(8080 + id)
 	var nextPort int32
-	if id == 3 {
+	if id == numNodes-1 {
 		nextPort = 8080
 	} else {
 		nextPort = int32(thisPort) + 1
@@ -146,7 +148,7 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	log.Println("qwe", id, ": ", thisPort)
+	log.Println("Node:", id, " using port ", thisPort)
 	grpcServer := grpc.NewServer()
 	node := newNode(int32(id), thisPort, nextPort)
 	pb.RegisterDMEServer(grpcServer, node)
