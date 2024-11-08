@@ -8,7 +8,7 @@ package dme;
 
 service DME{
     
-  rpc SendToken(Token) returns (google.protobuf.Empty) {}
+  rpc RecieveToken(Token) returns (google.protobuf.Empty) {}
 }
 
 message Token {
