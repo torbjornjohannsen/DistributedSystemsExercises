@@ -49,7 +49,7 @@ func (node *DMENode) RecieveToken(ctx context.Context, token *pb.Token) (*emptyp
 
 	node.mu.Unlock()
 
-	Dial(node, node.nextPort)
+	go Dial(node, node.nextPort)
 
 	return &emptypb.Empty{}, nil
 }
@@ -62,13 +62,13 @@ func (node *DMENode) SendToken(client pb.DMEClient) {
 	context := context.Background()
 
 	node.mu.Lock()
-	defer node.mu.Unlock()
 
 	_, err := client.RecieveToken(context, node.token)
 
 	log.Println("Sent token: \"", node.token, "\" to ", node.nextPort)
 	node.hasToken = false
 
+	node.mu.Unlock()
 	if err != nil {
 		log.Fatalln("Failed to send due to ", err)
 	}
