@@ -1,0 +1,18 @@
+syntax = "proto3";
+option go_package = "./dme";
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.routeguide";
+option java_outer_classname = "RouteGuideProto";
+package dme;
+
+service DME{
+    
+  rpc Chat(stream Message) returns (stream Message) {}
+}
+
+message Message {
+  string text = 1;
+  int32 lamport_time = 2;
+  int32 sender_id = 3;
+  bool last_message = 4;
+}
