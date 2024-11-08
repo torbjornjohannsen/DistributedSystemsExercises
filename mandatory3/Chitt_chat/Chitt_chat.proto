@@ -3,9 +3,10 @@ option go_package = "./Chitt_chat";
 option java_multiple_files = true;
 option java_package = "io.grpc.examples.routeguide";
 option java_outer_classname = "RouteGuideProto";
-package Chitt_chat;
+import "google/protobuf/empty.proto";
+package DME;
 
-service Chitt_chat{
+service DME{
 
   rpc Chat(stream Message) returns (stream Message) {}
 }
