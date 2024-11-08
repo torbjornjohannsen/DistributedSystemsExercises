@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand/v2"
 	"net"
 	"os"
 	"strconv"
@@ -29,12 +30,27 @@ var (
 type DMENode struct {
 	pb.UnimplementedDMEServer
 
-	token    *pb.Token
-	hasToken bool
-	mu       sync.Mutex
-	id       int32
-	thisPort int32
-	nextPort int32
+	token         *pb.Token
+	hasToken      bool
+	mu            sync.Mutex
+	accessCounter int32
+	id            int32
+	thisPort      int32
+	nextPort      int32
+}
+
+func (node *DMENode) AccessCriticalSection() {
+	f, err := os.OpenFile("critical.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+
+	if err != nil {
+		log.Fatalln("Failed to open critical file: ", err)
+	}
+
+	node.accessCounter++
+	strToWrite := fmt.Sprintln("Cool string ", node.accessCounter, " from node ", node.id)
+
+	f.WriteString(strToWrite)
+	log.Println("Wrote \"", strToWrite, "\" to the critical file")
 }
 
 // server
@@ -44,9 +60,14 @@ func (node *DMENode) RecieveToken(ctx context.Context, token *pb.Token) (*emptyp
 
 	log.Println("Recieved Token \"", token.Value, "\" from ", token.PeerID)
 
-	node.token = &pb.Token{Value: token.Value, PeerID: node.id} // set ID of the token to our ID
 	node.hasToken = true
+	if rand.IntN(2) > 0 {
+		node.AccessCriticalSection()
+	}
 
+	token.PeerID = node.id // set ID of the token to our ID
+	token.MinAccessCounter = min(token.MinAccessCounter, node.accessCounter)
+	node.token = token
 	node.mu.Unlock()
 
 	go Dial(node, node.nextPort)
@@ -65,13 +86,14 @@ func (node *DMENode) SendToken(client pb.DMEClient) {
 
 	_, err := client.RecieveToken(context, node.token)
 
-	log.Println("Sent token: \"", node.token, "\" to ", node.nextPort)
 	node.hasToken = false
 
 	node.mu.Unlock()
+
 	if err != nil {
 		log.Fatalln("Failed to send due to ", err)
 	}
+	log.Println("Sent token: \"", node.token, "\" to ", node.nextPort)
 
 }
 
@@ -94,7 +116,13 @@ func Dial(node *DMENode, port int32) {
 }
 
 func newNode(id int32, thisPort int32, nextPort int32) *DMENode {
-	return &DMENode{hasToken: false, id: id, thisPort: thisPort, nextPort: nextPort}
+	return &DMENode{hasToken: false, id: id, thisPort: thisPort, nextPort: nextPort, accessCounter: 0}
+}
+
+func serverKiller(server *grpc.Server, node *DMENode) {
+	time.Sleep(30 * time.Second)
+	server.GracefulStop()
+	os.Exit(0)
 }
 
 func main() {
@@ -125,16 +153,16 @@ func main() {
 
 	if node.id == 0 {
 		node.mu.Lock()
-		node.token = &pb.Token{Value: "token Value 123", PeerID: node.id}
+		node.token = &pb.Token{Value: "token Value 123", PeerID: node.id, MinAccessCounter: 0}
 		node.hasToken = true
 		node.mu.Unlock()
 
 		time.Sleep(time.Duration(5 * time.Second))
 		log.Println("Inital send \"", node.token.Value, "\" to ", node.nextPort)
-		Dial(node, node.nextPort)
+		go Dial(node, node.nextPort)
 
 	}
-
+	go serverKiller(grpcServer, node)
 	grpcServer.Serve(lis)
 
 }

@@ -14,4 +14,5 @@ service DME{
 message Token {
     string value = 1; 
     int32 peerID = 2;
+    int32 minAccessCounter = 3;
 }
