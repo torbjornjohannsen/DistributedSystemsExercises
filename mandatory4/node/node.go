@@ -51,6 +51,7 @@ func (node *DMENode) AccessCriticalSection() {
 
 	f.WriteString(strToWrite)
 	log.Println("Wrote \"", strToWrite, "\" to the critical file")
+	time.Sleep(500 * time.Millisecond)
 }
 
 // server
@@ -120,7 +121,7 @@ func newNode(id int32, thisPort int32, nextPort int32) *DMENode {
 }
 
 func serverKiller(server *grpc.Server, node *DMENode) {
-	time.Sleep(100 * time.Second)
+	time.Sleep(30 * time.Second)
 	server.GracefulStop()
 	log.Println("Killing node ", node.id)
 	os.Exit(0)
