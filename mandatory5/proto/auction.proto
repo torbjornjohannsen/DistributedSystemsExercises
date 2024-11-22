@@ -1,0 +1,26 @@
+syntax = "proto3";
+option go_package = "./auction";
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.routeguide";
+option java_outer_classname = "RouteGuideProto";
+import "google/protobuf/empty.proto";
+package auction;
+
+service Auction {
+    rpc Bid(Amount) returns (Acknowledgement) {}
+    rpc Result(google.protobuf.Empty) returns (Outcome) {}
+}
+
+message Amount {
+    int32 amount = 1; 
+}
+
+message Acknowledgement {
+    bool success = 1; 
+    int32 exception = 2; 
+}
+
+message Outcome {
+    bool auctionover = 1; 
+    int32 maxBid = 2; 
+}

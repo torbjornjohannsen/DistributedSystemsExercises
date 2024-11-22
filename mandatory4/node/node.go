@@ -121,7 +121,7 @@ func newNode(id int32, thisPort int32, nextPort int32) *DMENode {
 }
 
 func serverKiller(server *grpc.Server, node *DMENode) {
-	time.Sleep(30 * time.Second)
+	time.Sleep(150 * time.Second)
 	server.GracefulStop()
 	log.Println("Killing node ", node.id)
 	os.Exit(0)
