@@ -3,16 +3,17 @@ option go_package = "./auction";
 option java_multiple_files = true;
 option java_package = "io.grpc.examples.routeguide";
 option java_outer_classname = "RouteGuideProto";
-import "google/protobuf/empty.proto";
 package auction;
 
 service Auction {
     rpc Bid(Amount) returns (Acknowledgement) {}
-    rpc Result(google.protobuf.Empty) returns (Outcome) {}
+    rpc Result(IsServer) returns (Outcome) {}
 }
 
 message Amount {
     int32 amount = 1; 
+    bool isServer = 2;
+    int32 clientID = 3; 
 }
 
 message Acknowledgement {
@@ -23,4 +24,9 @@ message Acknowledgement {
 message Outcome {
     bool auctionover = 1; 
     int32 maxBid = 2; 
+    int32 clientID = 3; 
+}
+
+message IsServer {
+    bool isServer = 1; 
 }
