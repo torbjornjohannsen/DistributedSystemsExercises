@@ -133,7 +133,7 @@ func fail() {
 	time.Sleep(3 * time.Second)
 	for {
 		time.Sleep(1 * time.Second)
-		if rand.IntN(100) > 95 {
+		if rand.IntN(100) > 98 {
 			log.Fatalln("Server died")
 			os.Exit(1)
 		}
